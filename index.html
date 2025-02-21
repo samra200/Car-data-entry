@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Entry Form</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
+        input, button { padding: 10px; margin: 5px; text-transform: uppercase; }
+        table { width: 80%; margin: auto; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: center; }
+        th { background: #f4f4f4; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Data Entry Form</h1>
+
+    <input type="date" id="dateInput">
+    <input type="text" id="villageInput" placeholder="Village">
+    <input type="number" id="qtyInput" placeholder="Qty">
+    <input type="number" id="weightInput" placeholder="Weight">
+    <input type="number" id="receiptInput" placeholder="Receipt No" oninput="validateReceipt()">
+    <input type="text" id="carInput" placeholder="Car No">
+
+    <br>
+    <button onclick="addData()">Add</button>
+    <button onclick="clearData()">Clear All</button>
+    <button onclick="downloadExcel()">Download Excel</button>
+
+    <h2>Saved Data</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Village</th>
+                <th>Qty</th>
+                <th>Weight</th>
+                <th>Receipt No</th>
+                <th>Car No</th>
+            </tr>
+        </thead>
+        <tbody id="dataList"></tbody>
+    </table>
+
+    <script>
+        // Load saved data on page load
+        window.onload = function() {
+            let savedData = JSON.parse(localStorage.getItem("dataList")) || [];
+            let table = document.getElementById("dataList");
+            savedData.forEach(row => {
+                let tr = document.createElement("tr");
+                row.forEach(cell => {
+                    let td = document.createElement("td");
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+        };
+
+        function addData() {
+            let date = document.getElementById("dateInput").value;
+            let village = document.getElementById("villageInput").value.toUpperCase();
+            let qty = document.getElementById("qtyInput").value;
+            let weight = document.getElementById("weightInput").value;
+            let receipt = document.getElementById("receiptInput").value;
+            let car = document.getElementById("carInput").value.toUpperCase();
+
+            if (!date || !village || !qty || !weight || !receipt || !car) {
+                alert("All fields are required!");
+                return;
+            }
+
+            let table = document.getElementById("dataList");
+            let tr = document.createElement("tr");
+
+            [date, village, qty, weight, receipt, car].forEach(text => {
+                let td = document.createElement("td");
+                td.textContent = text;
+                tr.appendChild(td);
+            });
+
+            table.appendChild(tr);
+
+            // Save data to LocalStorage
+            let savedData = JSON.parse(localStorage.getItem("dataList")) || [];
+            savedData.push([date, village, qty, weight, receipt, car]);
+            localStorage.setItem("dataList", JSON.stringify(savedData));
+
+            // Clear inputs
+            document.getElementById("dateInput").value = "";
+            document.getElementById("villageInput").value = "";
+            document.getElementById("qtyInput").value = "";
+            document.getElementById("weightInput").value = "";
+            document.getElementById("receiptInput").value = "";
+            document.getElementById("carInput").value = "";
+        }
+
+        function validateReceipt() {
+            let receiptInput = document.getElementById("receiptInput");
+            receiptInput.value = receiptInput.value.replace(/\D/g, ""); // Allow only numbers
+        }
+
+        function clearData() {
+            localStorage.removeItem("dataList"); // Remove from storage
+            document.getElementById("dataList").innerHTML = ""; // Clear table
+        }
+
+        function downloadExcel() {
+            let savedData = JSON.parse(localStorage.getItem("dataList")) || [];
+            if (savedData.length === 0) {
+                alert("No data to download!");
+                return;
+            }
+
+            let worksheet = XLSX.utils.aoa_to_sheet([["Date", "Village", "Qty", "Weight", "Receipt No", "Car No"], ...savedData]);
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+            XLSX.writeFile(workbook, "data.xlsx");
+        }
+    </script>
+
+</body>
+</html>
